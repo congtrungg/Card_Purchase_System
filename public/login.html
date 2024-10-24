@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .login-box {
+            background-color: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 300px;
+            text-align: center;
+        }
+        input[type="text"], input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        a {
+            color: #008CBA;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-box">
+        <h1>Login</h1>
+        <form id="loginForm">
+            <label for="loginUsername">Username</label>
+            <input type="text" id="loginUsername" name="username" required>
+          
+            <label for="loginPassword">Password</label>
+            <input type="password" id="loginPassword" name="password" required>
+            <button type="submit" id="loginButton">Login</button>
+        </form>                       
+    </div>
+
+    <script>    
+        document.getElementById('loginForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+    
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+    
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username, password }),
+                });
+    
+                if (response.ok) {
+                    const data = await response.json();
+    
+                    // Store user role, username, and outlet in localStorage
+                    localStorage.setItem('role', data.role);
+                    localStorage.setItem('username', username);
+                    localStorage.setItem('outlet', data.outlet);  // Store outlet
+    
+                    window.location.href = 'main.html';  // Redirect to main page
+                } else {
+                    alert('Invalid username or password');
+                }
+            } catch (error) {
+                console.error('Error during login:', error);
+                alert('Server error');
+            }
+        });
+    </script>
+    
+</body>
+</html>

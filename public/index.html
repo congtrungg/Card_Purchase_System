@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Purchase System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+        }
+        .card-info {
+            display: flex;
+            justify-content: space-between;
+            width: 70%;
+            border: 1px solid #000;
+            padding: 10px;
+        }
+        .left, .right {
+            width: 48%;
+        }
+        .left div, .right div, .transaction-info div {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        input[type="text"], input[type="date"], button {
+            padding: 5px;
+        }
+        .card-number-group {
+            display: flex;
+            align-items: center;
+        }
+        .card-number-group input[type="password"] {
+            flex-grow: 1;
+            margin-right: 10px;
+        }
+        .transaction-info {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 70%; 
+            border: 1px solid #000; 
+            padding: 10px;
+            margin-top: 20px;
+        }
+        .transaction-info div {
+            margin-bottom: 15px; 
+            width: 14%; 
+        
+        }
+
+        table {
+            width: 80%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        table, th, td {
+            border: 1px solid black;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        .go-back-btn {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+        }
+        body {
+        font-family: Arial, sans-serif;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+        }
+        button:disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+    </style>
+</head>
+<body>
+    <button class="go-back-btn" onclick="location.href='main.html'">Go Back</button>
+    <div class="container">
+        <!-- Card Information Section -->
+        <div class="card-info">
+            <div class="left">
+                <div class="card-number-group">
+                    <div>
+                        <label for="cardNumberIMEI">Card Number IMEI</label>
+                        <input type="password" id="cardNumberIMEI" maxlength="16">
+                        <button onclick="fetchCardInfo()">Search</button>
+                        <button onclick="deleteCard()">Delete</button> 
+                    </div>
+                </div>
+                <div>
+                    <label for="cardOwner">Card Owner</label>
+                    <input type="text" id="cardOwner" readonly>
+                </div>
+                <div>
+                    <label for="expireDate">Expire Date</label>
+                    <input type="text" id="expireDate" readonly>
+                    <span id="expiredLabel" style="color: red; display: none;">Expired</span>
+                </div>
+            </div>
+            <div class="right">
+                <div>
+                    <label for="cardStatus">Card Status</label>
+                    <input type="text" id="cardStatus" readonly>
+                    <span id="inactiveLabel" style="color: red; font-weight: bold; display: none;">Inactive</span>
+                </div>
+                <div>
+                    <label for="position">Card type</label>
+                    <input type="text" id="cardtype" readonly>
+                </div>
+                <div>
+                    <label for="balanceLabel">Current Balance</label>
+                    <input type="text" id="balanceLabel" readonly /> VND 
+                </div>                
+            </div>
+        </div>
+
+        <!-- Transaction Section -->
+        <div class="transaction-info">
+            <div>
+                <label for="transaction" >Transaction Amount</label>
+                <label style="color: red; font-weight: bold">(POST số âm)</label>
+                <input type="text" id="transaction" oninput="formatCurrencyInput(event)">
+            </div>
+            <div>
+                <label for="billnumber">Bill Number</label>
+                <input type="text" id="billnumber">
+            </div>
+            <div>
+                <label for="outlet">Outlet</label>
+                <input type="text" id="outlet" readonly> 
+            </div>
+    <button onclick="submitTransaction()">Submit</button>
+    </div>
+
+        <!-- Transaction Table -->
+        <table id="transactionTable">
+            <tr>
+                <th>Card Number</th>
+                <th>Card Owner</th>
+                <th>Card Type</th>
+                <th>Opening Balance</th>
+                <th>Transaction Amount</th>
+                <th>Balance</th>
+                <th>Transaction Date</th>
+                <th>Cashier</th>
+                <th>Outlet</th>
+            </tr>
+        </table>
+    </div>
+    <!-- Custom confirmation dialog -->
+    <div id="confirmDialog" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); z-index: 1000;">
+        <div style="background-color: white; padding: 20px; width: 300px; margin: 100px auto; text-align: center;">
+            <p id="confirmMessage"></p>
+            <button id="confirmYes">Yes</button>
+            <button id="confirmNo">No</button>
+        </div>
+    </div>
+</body>
+<script src="script.js"></script>
+<script>
+    // Cursor in Card Number IMEI
+window.onload = function() {
+    document.getElementById('cardNumberIMEI').focus(); // Auto-focus on Card Number IMEI field
+};
+document.getElementById('cardNumberIMEI').addEventListener('keydown', function(event) {
+    if (event.key === 'Enter') {
+        fetchCardInfo();  // Trigger the search when Enter is pressed
+    }
+});
+
+document.getElementById('transaction').addEventListener('keydown', function(event) {
+    if (event.key === 'Enter') {
+        submitTransaction();  // Trigger the transaction when Enter is pressed
+    }
+});
+</script>
+</html>

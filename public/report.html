@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Report Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+        }
+        .go-back-btn {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+        }
+        table {
+            width: 90%;
+            margin: 0 auto;
+            border-collapse: collapse;
+            border: 1px solid #000;
+        }
+        th, td {
+            border: 1px solid #000;
+            padding: 10px;
+        }
+        th input {
+            width: 90%;
+        }
+        /* Add margin to date filters for better layout */
+        .date-filter {
+            margin: 10px 0;
+        }
+        .export-btn {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background-color: green;
+        color: white;
+        padding: 15px 30px;
+        font-size: 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+    .export-btn:hover {
+        background-color: darkgreen;
+    }
+    </style>
+    <!-- SheetJS library for exporting to Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+</head>
+<body>
+    <button class="go-back-btn" onclick="location.href='main.html'">Go Back</button>
+    <h2>Transaction Report</h2>
+
+    <!-- Date filter inputs -->
+    <div class="date-filter">
+        <label for="filterFromDate">From Date:</label>
+        <input type="date" id="filterFromDate" oninput="filterTable()">  
+        <label for="filterToDate">To Date:</label>
+        <input type="date" id="filterToDate" oninput="filterTable()">
+        <p id="dateErrorMsg" style="color: red; display: none;">Error: 'From Date' cannot be after 'To Date'</p>
+    </div>
+
+    <!-- Export to Excel button -->
+    <button class="export-btn" onclick="exportTableToExcel('reportTableBody', 'Transaction_Report')">Export</button>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Transaction ID <input type="text" id="filterTransactionID" onkeyup="filterTable()"></th>
+                <th>Bill Number <input type="text" id="filterBillNumber" onkeyup="filterTable()"></th>
+                <th>Card Number <input type="text" id="filterCardNumber" onkeyup="filterTable()"></th>
+                <th>Card IMEI <input type="text" id="filterCardImei" onkeyup="filterTable()"></th>
+                <th>Card Owner <input type="text" id="filterCardOwner" onkeyup="filterTable()"></th>
+                <th>Outlet <input type="text" id="filterOutlet" onkeyup="filterTable()"></th>
+                <th>Opening Balance 
+                    <input type="text" id="filterTransactionBalance" oninput="formatCurrencyInput(event); debouncedFilterTable();">
+                </th>
+                <th>Transaction Amount 
+                    <input type="text" id="filterTransactionAmount" oninput="formatCurrencyInput(event); debouncedFilterTable();">
+                </th>
+                
+                <th>Current Balance</th>
+                <th>Transaction Date 
+                    <input type="text" id="filterTransactionDate" onkeyup="filterTable()" placeholder="">
+                </th>
+            </tr>
+        </thead>
+        <tbody id="reportTableBody">
+        </tbody>
+    </table>
+    <script src="script.js"></script>
+</body>
+</html>

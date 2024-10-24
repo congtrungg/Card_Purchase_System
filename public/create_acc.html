@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account Page</title>
+    <style>
+        .go-back-btn {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: 150px;
+            height: 50px;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .register-box {
+            background-color: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 300px;
+            text-align: center;
+        }
+        input[type="text"], input[type="password"], select {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        a {
+            color: #008CBA;
+        }
+        
+    </style>
+</head>
+<body>
+    <button class="go-back-btn" onclick="location.href='main.html'">Go Back</button>
+    <div class="register-box">
+        <h1>Create Account</h1>
+        <form id="AccountForm">
+            <label for="registerUsername">Username:</label>
+            <input type="text" id="registerUsername" name="username" required>
+          
+            <label for="registerPassword">Password:</label>
+            <input type="password" id="registerPassword" name="password" required>
+          
+            <label for="registerRole">Role:</label>
+            <select id="registerRole" name="role" required>
+              <option value="cashier">Cashier</option>
+              <option value="accountant">Accountant</option>
+              <option value="manager">Manager</option>
+              <option value="admin">Admin</option>
+            </select>
+            <label for="registerOutlet">Outlet:</label>
+            <select id="registerOutlet" name="outlet" required>
+                <option value="none">None</option>
+                <option value="3 Spoons">3 Spoons</option>
+                <option value="Stellar">Stellar</option>
+                <option value="Hive Lounge">Hive Lounge</opstion>
+                <option value="QBar"> QBar</option>
+            </select>
+            <button type="submit" id="createButton">Create</button>  
+          </form>             
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

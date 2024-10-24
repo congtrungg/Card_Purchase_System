@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Card Management</title>
+    <style>
+        .go-back-btn {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: 150px;
+            height: 50px;
+        }
+
+        .export-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: green;
+            color: white;
+            padding: 10px 20px;
+            font-size: 18px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .export-btn:hover {
+            background-color: darkgreen;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            background-color: white;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+            width: 70%;
+        }
+
+        .form-container {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .card-info {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            width: 100%;
+        }
+
+        .left, .right {
+            width: 48%;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+            text-align: left;
+        }
+
+        input, select, button {
+            margin-top: 5px;
+            padding: 8px;
+            width: 100%;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button {
+            margin-top: 20px;
+            background-color: #4CAF50;
+            color: white;
+            width: 30%;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        table, th, td {
+            border: 1px solid black;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+
+        .search-container {
+            display: flex;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        .search-container label {
+            margin-right: 10px;
+            font-weight: bold;
+        }
+
+        .search-container input {
+            width: 345px;
+            padding: 8px;
+            margin-right: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .action-button {
+            width: 30%;
+            margin-top: 10px;
+        }
+
+        .save-btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+            width: 30%;
+        }
+
+        .save-btn:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <button class="go-back-btn" onclick="location.href='main.html'">Go Back</button>
+    <div class="container">
+        <h1>Card Type Management</h1>
+        <div class="form-container">
+            <form id="cardTypeForm">
+                <div class="card-info">
+                    <div class="left">
+                        <label for="cardType">Card Type Name:</label>
+                        <input type="text" id="cardType" name="cardType" required>
+
+                        <label for="openingBalance">Opening Balance:</label>
+                        <input type="text" id="openingBalance" name="openingBalance" required oninput="formatCurrencyInput(event)">
+                    </div>
+                </div>
+                <button type="submit">Add Card Type</button>
+            </form>
+
+            <div class="search-container">
+                <label for="searchInput">Search Card Type:</label>
+                <input type="text" id="searchInput" placeholder="Enter Card Type Name">
+                <button class="action-button" onclick="searchCardType()">Search</button>
+            </div>
+            <button class="action-button" onclick="editCardType()">Edit</button>
+            <button class="save-btn" onclick="saveCardType()">Save</button> 
+            <button class="action-button" onclick="deleteCardType()">Delete</button>
+        </div>
+
+        <table id="cardTypeTable">
+            <thead>
+                <tr>   
+                    <input type="hidden" id="cardTypeID" name="cardTypeID">
+                    <th>Card Type Name <input type="text" id="filterCardTypeName" onkeyup="filterTable()"></th>
+                    <th>Opening Balance <input type="text" id="filterOpeningBalance" oninput="formatCurrencyInput(event); filterTable()"></th>
+                </tr>
+            </thead>
+            <tbody id="cardTypeTableBody">
+                <!-- Card Type Data will be populated here -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        
+        // Function to lock input fields
+        function lockInputFields(locked) {
+            const inputFields = document.querySelectorAll('#cardTypeForm input');
+            inputFields.forEach(field => {
+                field.disabled = locked;
+            });
+        }
+
+        function formatCurrency(value) {
+            if (value === null || value === undefined) return value;
+
+            // Parse the value as a float to handle negative/positive amounts
+            const number = parseFloat(value);
+
+            // Format the number with commas, no decimal places
+            const formattedValue = number.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+
+            return formattedValue;
+        }
+
+        function formatCurrencyInput(event) {
+            let input = event.target.value;
+            input = input.replace(/[^\d]/g, '');  // Only allow numbers
+            if (input) {
+                input = parseInt(input, 10).toLocaleString('en-US');
+            }
+            event.target.value = input;
+        }
+
+        document.getElementById('cardTypeForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            
+            const cardTypeName = document.getElementById('cardType').value;
+            const openingBalance = document.getElementById('openingBalance').value.replace(/,/g, ''); // Remove commas for number format
+
+            // Check if the card type already exists
+            const existsResponse = await fetch(`/api/cardtypes/exist?cardTypeName=${encodeURIComponent(cardTypeName)}`);
+            const existsData = await existsResponse.json();
+
+            if (existsData.exists) {
+                alert('Card type already exists. Please choose a different name.');
+                return; // Exit if card type already exists
+            }
+
+            try {
+                const response = await fetch('/api/cardtypes', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ cardTypeName, openingBalance }),
+                });
+
+                const result = await response.json();
+                alert(result.message);
+                fetchCardTypes();  // Refresh the card type table
+            } catch (error) {
+                alert('Failed to add card type');
+                console.error(error);
+            }
+        });
+
+    // Search function for card types
+    async function searchCardType() {
+        const searchQuery = document.getElementById('searchInput').value;
+        
+        try {
+            const response = await fetch(`/api/cardtypes/search?query=${encodeURIComponent(searchQuery)}`);
+            
+            if (!response.ok) {
+                throw new Error("Card type not found");
+            }
+
+            const cardTypeData = await response.json();
+            console.log(cardTypeData); // Log the response to see the structure
+
+            // Populate the form with the fetched card type details
+            document.getElementById('cardType').value = cardTypeData.CardTypeName || "";
+            document.getElementById('openingBalance').value = cardTypeData.OpeningBalance ? formatCurrency(cardTypeData.OpeningBalance) : "";
+            
+            // Populate cardTypeID (add this line)
+            document.getElementById('cardTypeID').value = cardTypeData.CardTypeID || ""; // Assuming CardTypeID is returned
+
+            // Lock all input fields after the search
+            lockInputFields(true);
+        } catch (error) {
+            console.error(error);
+            alert(error.message);
+        }
+    }
+
+    // Edit function to unlock input fields
+    function editCardType() {
+        // Unlock specific fields for editing
+        const editableFields = ['cardType', 'openingBalance'];
+        editableFields.forEach(field => {
+            document.getElementById(field).removeAttribute('disabled');
+        });
+    }
+
+    async function saveCardType() {
+        const cardTypeName = document.getElementById("cardType").value.trim();
+        const openingBalanceRaw = document.getElementById("openingBalance").value.trim();
+        const openingBalance = openingBalanceRaw.replace(/,/g, ''); // Remove commas
+        const cardTypeID = document.getElementById('cardTypeID').value; // Get cardTypeID from the form
+
+        // Basic Validation
+        if (!cardTypeName || !openingBalance || !cardTypeID) {
+            alert("Please fill in all required fields.");
+            return;
+        }
+
+        // Validate Opening Balance as a number
+        if (isNaN(openingBalance) || parseFloat(openingBalance) < 0) {
+            alert("Please enter a valid opening balance.");
+            return;
+        }
+
+        const cardTypeData = {
+            cardTypeID, // Include cardTypeID
+            cardTypeName,
+            openingBalance,
+        };
+
+        console.log("Saving Card Type Data:", cardTypeData); // Debugging line
+
+        try {
+            const response = await fetch(`/api/cardtypes/update`, { // Adjust endpoint for the update
+                method: 'PUT', 
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(cardTypeData),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to save card type');
+            }
+
+            const result = await response.json();
+            alert(result.message || 'Card type saved successfully');
+            fetchCardTypes(); // Refresh the table
+        } catch (error) {
+            console.error('Error saving card type:', error);
+            alert('Error saving card type: ' + error.message);
+        }
+    }
+
+    document.getElementById('searchInput').addEventListener('keydown', function(event){
+        if(event.key === 'Enter'){
+            searchCardType();
+        }
+    });
+
+    async function deleteCardType() {
+        const cardTypeID = document.getElementById('cardTypeID').value;  // Make sure to store CardTypeID on search
+
+        if (!cardTypeID) {
+            alert('Please search for a card type first');
+            return;
+        }
+        
+        if (confirm('Are you sure you want to delete this card type?')) {
+            try {
+                const response = await fetch(`/api/cardtypes/${cardTypeID}`, {
+                    method: 'DELETE',
+                });
+
+                const result = await response.json();
+                alert(result.message);
+                fetchCardTypes();  // Refresh the table
+            } catch (error) {
+                alert('Failed to delete card type');
+                console.error(error);
+            }
+        }
+    }
+
+    async function fetchCardTypes() {
+        try {
+            const response = await fetch('/api/cardtypes');
+            const cardTypes = await response.json();
+
+            const tableBody = document.getElementById('cardTypeTableBody');
+            tableBody.innerHTML = '';  // Clear the table
+
+            // Populate the table with card types
+            cardTypes.forEach(cardType => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${cardType.CardTypeName}</td>
+                    <td>${formatCurrency(cardType.OpeningBalance)}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+
+            // Reset the form fields
+            document.getElementById('searchInput').value = '';
+            document.getElementById('cardType').value = '';
+            document.getElementById('openingBalance').value = '';
+            document.getElementById('cardTypeID').value = ''; // Clear cardTypeID as well
+
+        } catch (error) {
+            alert('Error fetching card types');
+            console.error(error);
+        }
+    }
+
+    function filterTable() {
+        const filterCardTypeName = document.getElementById('filterCardTypeName').value.toLowerCase();
+        const filterOpeningBalanceInput = document.getElementById('filterOpeningBalance').value.trim().replace(/,/g, '');
+        
+        // Parse the opening balance for comparison
+        const filterOpeningBalanceValue = filterOpeningBalanceInput === "" || !isNaN(filterOpeningBalanceInput) ? parseFloat(filterOpeningBalanceInput) : NaN;
+
+        const table = document.getElementById('cardTypeTableBody');
+        const rows = table.getElementsByTagName('tr');
+
+        for (let i = 0; i < rows.length; i++) {
+            const cells = rows[i].getElementsByTagName('td');
+
+            // Extract the values to compare
+            const cardTypeName = cells[0].innerText.toLowerCase();
+            const openingBalance = parseFloat(cells[1].innerText.replace(/,/g, ''));
+
+            const matches = [
+                cardTypeName.includes(filterCardTypeName),
+                isNaN(filterOpeningBalanceValue) || openingBalance === filterOpeningBalanceValue
+            ];
+
+            // Show the row if all conditions match, otherwise hide it
+            rows[i].style.display = matches.every(Boolean) ? '' : 'none';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', fetchCardTypes);
+    </script>
+</body>
+</html>

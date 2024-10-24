@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Main Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+        }
+        .large-btn {
+            width: 200px;
+            padding: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .large-btn:hover {
+            background-color: #45a049;
+        }
+        .large-btn:active {
+            background-color: #3e8e41;
+        }
+        .large-btn.disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .profile-container {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: none;
+            text-align: center;
+        }
+        .profile-icon {
+            width: 50px;
+            height: 50px;
+            background-color: #008CBA;
+            border-radius: 50%;
+            margin-bottom: 5px;
+        }
+        .profile-name {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        .profile-role {
+            color: #666;
+            font-size: 14px;
+        }
+        .login-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background-color: #008CBA;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .logout-btn {
+            display: none;
+            margin-top: 5px;
+            padding: 5px 10px;
+            background-color: #f44336;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <button class="login-btn" id="loginBtn">Login</button>
+
+    <div class="profile-container" id="profileContainer">
+        <div class="profile-icon"></div>
+        <div class="profile-name" id="profileName"></div>
+        <div class="profile-role" id="profileRole"></div>
+        <button class="logout-btn" id="logoutBtn">Logout</button>
+    </div>
+
+    <div class="container">
+        <button class="large-btn" id="transactionBtn">Transaction</button>
+        <button class="large-btn" id="reportBtn">Report</button>
+        <button class="large-btn" id="cardBtn">Create Card</button>
+        <button class="large-btn" id="createAccountBtn">Create Account</button>
+        <button class="large-btn" id="cardManagementBtn">Card Management</button>
+    </div>
+
+    <script>
+        window.addEventListener('load', async function() {
+        try {
+            const response = await fetch('/api/server-status');
+            const data = await response.json();
+            
+            // Check if server was restarted by comparing stored time with server start time
+            const storedServerTime = localStorage.getItem('serverStartTime');
+            if (!storedServerTime || storedServerTime < data.startTime) {
+                // Server has restarted, clear localStorage and require login again
+                localStorage.clear();
+                localStorage.setItem('serverStartTime', data.startTime);  // Update with new start time
+                window.location.href = 'login.html';  // Redirect to login
+            }
+        } catch (error) {
+            console.error('Error checking server status:', error);
+        }
+        });
+
+        // Redirect buttons
+        document.getElementById("loginBtn").addEventListener("click", function() {
+            window.location.href = "login.html";
+        });
+
+        document.getElementById("logoutBtn").addEventListener("click", async function() {
+        try {
+            const response = await fetch('/api/logout', { method: 'POST' });
+            if (response.ok) {
+                localStorage.clear();  // Clear localStorage
+                window.location.href = 'login.html';  // Redirect to login page
+            }
+        } catch (error) {
+            console.error('Logout error:', error);
+        }
+        });
+
+        document.getElementById("transactionBtn").addEventListener("click", function() {
+            window.location.href = "index.html";
+        });
+
+        document.getElementById("reportBtn").addEventListener("click", function() {
+            window.location.href = "report.html";
+        });
+
+        document.getElementById("cardBtn").addEventListener("click", function() {
+            window.location.href = "create_card.html";
+        });
+
+        document.getElementById("createAccountBtn").addEventListener("click", function() {
+            window.location.href = "create_acc.html";
+        });
+        document.getElementById("cardManagementBtn").addEventListener("click", function(){
+            window.location.href = "card_management.html";
+        });
+
+        // Manage button access based on user role
+        const userRole = localStorage.getItem('role');
+        const username = localStorage.getItem('username');
+        const profileContainer = document.getElementById("profileContainer");
+        const profileName = document.getElementById("profileName");
+        const profileRole = document.getElementById("profileRole");
+        const loginBtn = document.getElementById("loginBtn");
+        const logoutBtn = document.getElementById("logoutBtn");
+
+        function disableButton(buttonId) {
+            const btn = document.getElementById(buttonId);
+            btn.classList.add('disabled');
+            btn.disabled = true;
+        }
+  
+        if (!userRole || !username) {
+            // No user logged in, disable buttons and hide logout button
+            ['transactionBtn', 'reportBtn', 'cardBtn', 'createAccountBtn'].forEach(disableButton);
+        } else {
+            // Show profile and logout button
+            profileContainer.style.display = 'block';
+            profileName.innerText = username;
+            profileRole.innerText = `(${userRole})`;
+            loginBtn.style.display = 'none';
+            logoutBtn.style.display = 'inline-block';
+
+            // Enable/disable buttons based on role
+            if (userRole === 'cashier') {
+                disableButton('reportBtn');
+                disableButton('cardBtn');
+                disableButton('createAccountBtn');
+                disableButton('cardManagementBtn');
+            } else if (userRole === 'accountant') {
+                disableButton('cardBtn');
+                disableButton('createAccountBtn');
+                disableButton('cardManagementBtn');
+            } else if (userRole === 'manager'){
+                disableButton('cardBtn');
+                disableButton('createAccountBtn');
+                disableButton('cardManagementBtn');
+            }
+        }
+    </script>
+</body>
+</html>

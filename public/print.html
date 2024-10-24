@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Print Bill</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+        }
+        .bill {
+            
+            padding: 20px;
+            margin: 0 auto;
+            width: 30%;
+            text-align: left;
+        }
+        .bill h2 {
+            margin-top: 0;
+        }
+        @media print {
+            button {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bill" id="billInfo">
+        <h2>Bill Information</h2>
+        <p>Bill Number: <span id="billnumber"></span></p> 
+        <p>Card Number: <span id="cardNumber"></span></p>
+        <p>Card Owner: <span id="cardOwner"></span></p>
+        <p>Card Type: <span id="cardType"></span></p>
+        <p>Transaction Date: <span id="transactionDate"></span></p>
+        <p>Opening Balance: <span id="transactionBalance"></span></p>
+        <p>Transaction Amount: <span id="transactionAmount"></span></p> 
+        <p>Current Balance: <span id="balanceLabel"></span></p>
+        <p>Outlet: <span id ="outlet"></span></p>
+        <p>Cashier: <span id="cashierprintbill"></span></p>
+    </div>
+
+    <script>
+        // Load the latest bill data from localStorage
+        const billData = JSON.parse(localStorage.getItem('latestBill'));
+    
+        if (billData) {
+            document.getElementById('cardNumber').innerText = billData.cardNumber;
+            document.getElementById('cardOwner').innerText = billData.cardOwner;
+            document.getElementById('transactionDate').innerText = billData.transactionDate;
+            document.getElementById('transactionBalance').innerText = billData.transactionBalance + ' VND';
+            document.getElementById('transactionAmount').innerText = billData.transactionAmount + ' VND';
+            document.getElementById('balanceLabel').innerText = billData.currentBalance + ' VND';
+            document.getElementById('cashierprintbill').innerText = billData.cashier;
+            document.getElementById('outlet').innerText = billData.outlet;
+            document.getElementById('cardType').innerText  =billData.cardTypeName;
+            
+            // Automatically trigger the print dialog
+            setTimeout(() => {
+                window.print();
+            }, 500);  // Slight delay to allow the page to render fully
+        } else {
+            alert('No bill information found');
+        }
+    </script>    
+</body>
+</html>
