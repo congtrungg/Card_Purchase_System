@@ -105,6 +105,7 @@
         <button class="large-btn" id="cardBtn">Create Card</button>
         <button class="large-btn" id="createAccountBtn">Create Account</button>
         <button class="large-btn" id="cardManagementBtn">Card Management</button>
+        <button class="large-btn" id="accManagementBtn">Account Management</button>
     </div>
 
     <script>
@@ -161,6 +162,9 @@
         document.getElementById("cardManagementBtn").addEventListener("click", function(){
             window.location.href = "card_management.html";
         });
+        document.getElementById("accManagementBtn").addEventListener("click", function(){
+            window.location.href = "acc_management.html";
+        });
 
         // Manage button access based on user role
         const userRole = localStorage.getItem('role');
@@ -179,7 +183,7 @@
   
         if (!userRole || !username) {
             // No user logged in, disable buttons and hide logout button
-            ['transactionBtn', 'reportBtn', 'cardBtn', 'createAccountBtn'].forEach(disableButton);
+            ['transactionBtn', 'reportBtn', 'cardBtn', 'createAccountBtn', 'cardManagementBtn', 'accManagementBtn'].forEach(disableButton);
         } else {
             // Show profile and logout button
             profileContainer.style.display = 'block';
@@ -194,14 +198,17 @@
                 disableButton('cardBtn');
                 disableButton('createAccountBtn');
                 disableButton('cardManagementBtn');
+                disableButton('accManagementBtn');
             } else if (userRole === 'accountant') {
                 disableButton('cardBtn');
                 disableButton('createAccountBtn');
                 disableButton('cardManagementBtn');
+                disableButton('accManagementBtn');
             } else if (userRole === 'manager'){
                 disableButton('cardBtn');
                 disableButton('createAccountBtn');
                 disableButton('cardManagementBtn');
+                disableButton('accManagementBtn');
             }
         }
     </script>
