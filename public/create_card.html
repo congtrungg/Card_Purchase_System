@@ -206,7 +206,8 @@
                         </select>
 
                         <label for="expireDate">Expire Date:</label>
-                        <input type="text" id="expireDateInput" name="expireDate" placeholder="dd/mm/yyyy" required>
+                        <input type="text" id="expireDateInput" name="expireDate" placeholder="dd/mm/yyyy" maxlength="10" required>
+
                     </div>
                 </div>
                 <button type="submit">Create Card</button>
@@ -389,6 +390,26 @@ async function searchCard() {
         });
     }
 
+    function refreshCardData() {
+        // Clear the input fields
+        document.getElementById("cardNumber").value = "";
+        document.getElementById("cardIMEI").value = "";
+        document.getElementById("cardOwner").value = "";
+        document.getElementById("cardType").value = "";
+        document.getElementById("position").value = "";
+        document.getElementById("openingBalance").value = "";
+        document.getElementById("cardStatus").value = "";
+        document.getElementById("expireDateInput").value = "";
+        document.getElementById("searchInput").value = "";
+        // Lock all input fields again
+        lockInputFields(false);
+
+        // Clear the search table
+        document.getElementById('cardTableBody').innerHTML = "";
+
+        fetchCardData();
+    }
+
 async function saveCard() {
     const cardNumber = document.getElementById("cardNumber").value.trim();
     const cardOwner = document.getElementById("cardOwner").value.trim();
@@ -474,7 +495,7 @@ async function saveCard() {
 
         const result = await response.json();
         alert(result.message || 'Card saved successfully');
-        fetchCardData(); // Refresh the table
+        refreshCardData(); // Refresh the table
     } catch (error) {
         console.error('Error saving card:', error);
         alert('Error saving card: ' + error.message);
@@ -486,47 +507,109 @@ const expireDateInput = document.getElementById("expireDateInput");
 expireDateInput.addEventListener("input", function (e) {
     let value = e.target.value.replace(/[^0-9]/g, ''); // Remove non-numeric characters
 
-    // Limit the input length to 8 characters (dd/mm/yyyy)
+    // Save the cursor position and current length before formatting
+    let cursorPosition = e.target.selectionStart;
+    let originalLength = e.target.value.length;
+
+    // Limit the input length to 8 characters (ddmmyyyy)
     if (value.length > 8) {
         value = value.slice(0, 8);
     }
 
-    // Insert slashes after day and month
+    // Format value as dd/mm/yyyy
     let formattedValue = '';
-    if (value.length >= 2) {
-        formattedValue = value.slice(0, 2) + '/';
+    if (value.length > 0) {
+        formattedValue = value.slice(0, 2); // Day
     }
-    if (value.length >= 4) {
-        formattedValue += value.slice(2, 4) + '/';
+    if (value.length >= 3) {
+        formattedValue += '/' + value.slice(2, 4); // Month
     }
-    formattedValue += value.slice(4);
+    if (value.length >= 5) {
+        formattedValue += '/' + value.slice(4, 8); // Year
+    }
 
-    // Update the input value
+    // Set the formatted value
     e.target.value = formattedValue;
 
-    // Set the cursor position correctly
-    const cursorPosition = Math.min(formattedValue.length, e.target.selectionStart);
-    e.target.setSelectionRange(cursorPosition, cursorPosition);
+    // Adjust cursor position to account for slashes (/) added to the string
+    let newCursorPosition = cursorPosition + (formattedValue.length - originalLength);
+    e.target.setSelectionRange(newCursorPosition, newCursorPosition);
 });
 
-// Maintain cursor position when editing
 expireDateInput.addEventListener("keydown", function (e) {
     const key = e.key;
     const startPos = this.selectionStart;
-    const value = this.value;
 
-    // If the key is Backspace or Delete, save the current position
+    // Handle Backspace/Delete and reformat after the action
     if (key === "Backspace" || key === "Delete") {
         setTimeout(() => {
-            const newPos = this.value.length - value.length + startPos; // Update the cursor position
-            this.setSelectionRange(newPos, newPos);
+            let value = this.value.replace(/[^0-9]/g, ''); // Remove non-numeric characters
+
+            // Remove the character at the cursor position or the one before it (for Backspace)
+            if (key === "Backspace" && startPos > 0) {
+                value = value.slice(0, startPos - 1) + value.slice(startPos);
+            } else if (key === "Delete" && startPos < value.length) {
+                value = value.slice(0, startPos) + value.slice(startPos + 1);
+            }
+
+            // Format value as dd/mm/yyyy
+            let formattedValue = '';
+            if (value.length > 0) {
+                formattedValue = value.slice(0, 2); // Day
+            }
+            if (value.length >= 3) {
+                formattedValue += '/' + value.slice(2, 4); // Month
+            }
+            if (value.length >= 5) {
+                formattedValue += '/' + value.slice(4, 8); // Year
+            }
+
+            this.value = formattedValue;
+
+            // Set cursor position back to where the deletion occurred, adjusting for slashes
+            let newCursorPosition = Math.max(startPos - (key === "Backspace" ? 1 : 0), 0);
+            this.setSelectionRange(newCursorPosition, newCursorPosition);
         }, 0);
     }
 });
 
     // Function to delete the card data and clear the form
-    function deleteCardData() {
-        // Clear the input fields
+    async function deleteCardData() {
+    // Get the card number or IMEI from the input field (whichever you are using to identify the card)
+    const cardNumber = document.getElementById("cardNumber").value.trim();
+    const cardIMEI = document.getElementById("cardIMEI").value.trim();
+
+    // Validate that either cardNumber or cardIMEI is provided
+    if (!cardNumber && !cardIMEI) {
+        alert("Please enter a Card Number or IMEI to delete.");
+        return;
+    }
+
+    // Confirm deletion
+    const confirmation = confirm("Are you sure you want to delete this card?");
+    if (!confirmation) {
+        return; // Exit if not confirmed
+    }
+
+    try {
+        const response = await fetch('/api/delete-card', {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                cardNumber: cardNumber,
+                cardIMEI: cardIMEI
+            })
+        });
+
+        if (!response.ok) {
+            const errorMessage = await response.text(); // Get error message
+            alert(`Error deleting card: ${errorMessage}`);
+            return;
+        }
+
+        // Clear input fields
         document.getElementById("cardNumber").value = "";
         document.getElementById("cardIMEI").value = "";
         document.getElementById("cardOwner").value = "";
@@ -536,14 +619,20 @@ expireDateInput.addEventListener("keydown", function (e) {
         document.getElementById("cardStatus").value = "";
         document.getElementById("expireDateInput").value = "";
         document.getElementById("searchInput").value = "";
+
         // Lock all input fields again
         lockInputFields(false);
 
         // Clear the search table
         document.getElementById('cardTableBody').innerHTML = "";
 
-        fetchCardData();
+        alert('Card deleted successfully!');
+        refreshCardData();
+    } catch (error) {
+        console.error('Error deleting card:', error);
+        alert('An error occurred while deleting the card.');
     }
+}
 
     async function fetchCardData() {
     try {
@@ -684,24 +773,30 @@ expireDateInput.addEventListener("keydown", function (e) {
     };
 
     try {
-        const response = await fetch('/api/create-card', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(cardData)
-        });
+    const response = await fetch('/api/create-card', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(cardData)
+    });
 
-        if (!response.ok) {
-            if (response.status === 409) {
+    if (!response.ok) {
+        if (response.status === 409) {
+            const errorMessage = await response.text(); // Get the error message from the server
+
+            if (errorMessage.includes('IMEI')) {
                 alert('A card with this IMEI already exists.');
-            } else {
-                throw new Error('Network response was not ok');
+            } else if (errorMessage.includes('Number')) {
+                alert('A card with this Number already exists.');
             }
         } else {
-            alert('Card created successfully!');
-            deleteCardData(); // Clear form or perform any necessary updates
+            throw new Error('Network response was not ok');
         }
+    } else {
+        alert('Card created successfully!');
+        refreshCardData(); // Clear form or perform any necessary updates
+    }
     } catch (error) {
         console.error('Error creating card:', error);
     }
