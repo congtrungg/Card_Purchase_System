@@ -55,6 +55,9 @@ app.get('/create_acc.html', isAuthenticated, (req, res) => {
 app.get('/card_management.html', isAuthenticated, (req, res) => {
     res.sendFile(path.join(__dirname, 'public/card_management.html'));
 });
+app.get('/acc_management.html', isAuthenticated, (req, res) => {
+    res.sendFile(path.join(__dirname, 'public/acc_management.html'));
+});
 
 // Parse incoming JSON requests
 app.use(express.json());
@@ -281,13 +284,22 @@ app.post('/api/create-card', async (req, res) => {
     try {
         let pool = await connectToDatabase();
 
-        // Check if card already exists
+        // Check if card already exists by IMEI or Number
         let existingCardResult = await pool.request()
             .input('cardIMEI', sql.VarChar, cardIMEI)
-            .query('SELECT * FROM Card WHERE CardIMEI = @cardIMEI');
+            .input('cardNumber', sql.VarChar, cardNumber) // Using correct variable cardNumber
+            .query('SELECT * FROM Card WHERE CardIMEI = @cardIMEI OR CardNumber = @cardNumber');
 
         if (existingCardResult.recordset.length > 0) {
-            return res.status(409).send('Card with this IMEI already exists');
+            const existingCard = existingCardResult.recordset[0];
+            // Check if it's the IMEI that exists
+            if (existingCard.CardIMEI === cardIMEI) {
+                return res.status(409).send('Card with this IMEI already exists');
+            } 
+            // Check if it's the Card Number that exists
+            if (existingCard.CardNumber === cardNumber) {
+                return res.status(409).send('Card with this Number already exists');
+            }
         }
 
         // Convert the date format to yyyy-mm-dd for SQL insertion
@@ -315,6 +327,36 @@ app.post('/api/create-card', async (req, res) => {
     } catch (error) {
         console.error('Error creating card:', error);
         res.status(500).send('Server error');
+    }
+});
+
+app.delete('/api/delete-card', async (req, res) => {
+    const { cardNumber, cardIMEI } = req.body;
+
+    // Validate input
+    if (!cardNumber && !cardIMEI) {
+        return res.status(400).send('Card Number or IMEI is required for deletion.');
+    }
+
+    try {
+        let pool = await connectToDatabase();
+
+        // First, delete transactions related to the card
+        await pool.request()
+            .input('cardNumber', sql.VarChar, cardNumber)
+            .input('cardIMEI', sql.VarChar, cardIMEI)
+            .query('DELETE FROM [Transaction] WHERE CardID IN (SELECT CardID FROM Card WHERE CardNumber = @cardNumber OR CardIMEI = @cardIMEI)');
+
+        // Now delete the card
+        await pool.request()
+            .input('cardNumber', sql.VarChar, cardNumber)
+            .input('cardIMEI', sql.VarChar, cardIMEI)
+            .query('DELETE FROM Card WHERE CardNumber = @cardNumber OR CardIMEI = @cardIMEI');
+
+        res.status(200).send('Card and related transactions deleted successfully');
+    } catch (error) {
+        console.error('Error deleting card:', error);
+        res.status(500).send('Server error while deleting card');
     }
 });
 
@@ -611,6 +653,113 @@ app.get('/api/card-types', async (req, res) => {
     } catch (error) {
         console.error('Error fetching card types:', error);
         res.status(500).send('Server error');
+    }
+});
+
+// Route to fetch all user accounts
+app.get('/api/users', async (req, res) => {
+    try {
+        let pool = await connectToDatabase();
+        let result = await pool.request().query('SELECT * FROM Users');
+        res.json(result.recordset); // Send the result as JSON
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Server error');
+    }
+});
+
+// Route to search for a user based on username
+app.get('/api/users/search', async (req, res) => {
+    const searchQuery = req.query.query;  // Get the search input from query parameters
+
+    try {
+        const query = `
+            SELECT * 
+            FROM Users 
+            WHERE Username = @searchQuery`;
+
+        const request = new sql.Request();
+        request.input('searchQuery', sql.NVarChar, searchQuery); // Use parameterized input
+
+        const result = await request.query(query);
+        if (result.recordset.length === 0) {
+            return res.status(404).json({ message: "User not found" });
+        }
+        res.json(result.recordset[0]);  // Return the first matching record
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Server error" });
+    }
+});
+
+// Route to update user details
+app.put('/api/users/update', async (req, res) => {
+    const { userID, username, password, role, outlet } = req.body;
+
+    // Basic validation to ensure required fields are present
+    if (!userID || !username || !role) {
+        return res.status(400).json({ message: "User ID, Username, and Role are required." });
+    }
+
+    try {
+        const request = new sql.Request();
+        request.input('userID', sql.Int, userID);
+        request.input('username', sql.NVarChar, username);
+        request.input('role', sql.NVarChar, role);
+
+        // Conditionally include password if it's provided
+        if (password) {
+            request.input('password', sql.NVarChar, password);
+        }
+
+        // Set outlet as NULL if it's empty or not provided
+        request.input('outlet', sql.NVarChar, outlet || null);
+
+        // Construct the SQL query to conditionally update fields
+        const query = `
+            UPDATE Users SET
+                Username = @username,
+                ${password ? 'Password = @password,' : ''} 
+                Role = @role,
+                Outlet = @outlet
+            WHERE UserID = @userID
+        `;
+
+        const result = await request.query(query);
+
+        // Check if any rows were affected
+        if (result.rowsAffected[0] === 0) {
+            return res.status(404).json({ message: "User not found." });
+        }
+
+        res.json({ message: "User updated successfully" });
+    } catch (error) {
+        console.error('Error updating user:', error);
+        res.status(500).json({ message: "Server error" });
+    }
+});
+
+// Route to delete a user
+app.delete('/api/users/:id', async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        let pool = await connectToDatabase();
+        const request = pool.request();
+        request.input('id', sql.Int, id);
+
+        const result = await request.query(`
+            DELETE FROM Users WHERE UserID = @id
+        `);
+
+        if (result.rowsAffected[0] === 0) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        res.json({ message: 'User deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting user:', error);
+        res.status(500).json({ message: 'Server error', error: error.message });
     }
 });
 
